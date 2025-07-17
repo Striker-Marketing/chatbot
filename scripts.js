@@ -90,7 +90,7 @@ const setUpChat = ({ formId, buttonId, mapsKey, items, waitingTime, noScrollDown
     switch (item.type) {
       case "no-input":
       case "submit": {
-        addQuestion({ type: item.type, element: createMessage(item) });
+        addQuestion({ type: item.type, element: createMessage(item), waitingTime: item.waitingTime });
         break;
       }
 
@@ -124,11 +124,11 @@ const setUpChat = ({ formId, buttonId, mapsKey, items, waitingTime, noScrollDown
     if (!noScrollDown) document.documentElement.scrollTop = document.documentElement.scrollHeight;
   };
 
-  const handleNextQuestion = async (nextStep, maxStep) => {
+  const handleNextQuestion = async (nextStep, maxStep, customWaitingTime) => {
     if (nextStep === maxStep) return;
     form.appendChild(spinner);
     scrollToBottom();
-    await delay(waitingTime);
+    await delay(customWaitingTime || waitingTime);
     handleQuestions(nextStep);
     scrollToBottom();
   };
@@ -141,7 +141,7 @@ const setUpChat = ({ formId, buttonId, mapsKey, items, waitingTime, noScrollDown
     switch (type) {
       case "no-input": {
         form.appendChild(element);
-        handleNextQuestion(nextStep, maxStep);
+        handleNextQuestion(nextStep, maxStep, params.waitingTime);
         break;
       }
       case "text":
@@ -216,6 +216,11 @@ const setUpChat = ({ formId, buttonId, mapsKey, items, waitingTime, noScrollDown
         input.focus();
         const handleQuestionSubmit = () => {
           if (input.value.trim() !== "" && input.checkValidity() && (input.id !== "phone_number" || (input.id === "phone_number" && iti.isValidNumber()))) {
+            if(type === "name"){
+              questions.slice(nextStep).forEach(question=>{
+                question.element.childNodes[0].textContent = question.element.childNodes[0].textContent.replace("[Name]", input.value.trim())
+              })
+            }
             form.appendChild(createResponse(input.value));
             handleNextQuestion(nextStep, maxStep);
           } else input.classList.add("invalid-input");
